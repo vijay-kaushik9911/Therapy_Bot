@@ -1,78 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat with Rasa Bot</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-      }
-      #chatbox {
-        width: 100%;
-        height: 400px;
-        overflow-y: scroll;
-        background-color: #faf9f9;
-        padding: 10px;
-        border-radius: 5px;
-      }
-      #user-input {
-        width: 80%;
-        padding: 10px;
-        margin-top: 10px;
-      }
-      #send-btn {
-        padding: 10px 15px;
-        margin-left: 10px;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #chatbox {
+            width: 100%;
+            height: 400px;
+            overflow-y: scroll;
+            background-color: #faf9f9;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        #user-input {
+            width: 80%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        #send-btn {
+            padding: 10px 15px;
+            margin-left: 10px;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
+    <h1>Chat with Rasa Bot</h1>
     <div id="chatbox"></div>
     <div>
-      <input type="text" id="user-input" placeholder="Type your message..." />
-      <button id="send-btn" onclick="sendMessage()">Send</button>
+        <input type="text" id="user-input" placeholder="Type your message..." />
+        <button id="send-btn" onclick="sendMessage()">Send</button>
     </div>
 
     <script>
-      const chatbox = document.getElementById("chatbox");
-      const userInput = document.getElementById("user-input");
+        const chatbox = document.getElementById("chatbox");
+        const userInput = document.getElementById("user-input");
 
-      // Function to send user message to the Rasa bot
-      async function sendMessage() {
-        const userMessage = userInput.value;
-        if (userMessage.trim() === "") return;
+        // Function to send user message to the Rasa bot
+        async function sendMessage() {
+            const userMessage = userInput.value;
+            if (userMessage.trim() === "") return;
 
-        // Display user message in chatbox
-        chatbox.innerHTML += `<div>User: ${userMessage}</div>`;
-        userInput.value = ""; // Clear input field
+            // Display user message in chatbox
+            chatbox.innerHTML += `<div>User: ${userMessage}</div>`;
+            userInput.value = ""; // Clear input field
 
-        // Send user message to the Rasa API
-        const response = await fetch(
-          "http://localhost:5005/webhooks/rest/webhook",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              sender: "user",
-              message: userMessage,
-            }),
-          }
-        );
+            try {
+                // Send user message to the Rasa API
+                const response = await fetch("http://localhost:5005/webhooks/rest/webhook", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        sender: "user",
+                        message: userMessage,
+                    }),
+                });
 
-        // Parse and display the response from Rasa
-        const data = await response.json();
-        data.forEach((message) => {
-          if (message.text) {
-            chatbox.innerHTML += `<div>Bot: ${message.text}</div>`;
-          }
-        });
+                // Check if the response is ok
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
 
-        // Scroll chatbox to the bottom
-        chatbox.scrollTop = chatbox.scrollHeight;
-      }
+                // Parse and display the response from Rasa
+                const data = await response.json();
+                data.forEach((message) => {
+                    if (message.text) {
+                        chatbox.innerHTML += `<div>Bot: ${message.text}</div>`;
+                    }
+                });
+            } catch (error) {
+                chatbox.innerHTML += `<div>Bot: Sorry, there was an error: ${error.message}</div>`;
+            }
+
+            // Scroll chatbox to the bottom
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
     </script>
-  </body>
+</body>
 </html>
